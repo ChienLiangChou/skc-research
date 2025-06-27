@@ -1,11 +1,24 @@
-# mypy: disable - error - code = "no-untyped-def,misc"
-import pathlib
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, UploadFile, File, HTTPException, Request, Form
+from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import pathlib
+from agent.utils import extract_text_from_file
+from agent.graph import graph
+from langchain_core.messages import HumanMessage
+import asyncio
+import json
 
 # Define the FastAPI app
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def create_frontend_router(build_dir="../frontend/dist"):
     """Creates a router to serve the React frontend.
@@ -43,3 +56,48 @@ app.mount(
     create_frontend_router(),
     name="frontend",
 )
+
+@app.post("/upload-and-analyze/progress")
+async def upload_and_analyze_progress(request: Request, file: UploadFile = File(...), prompt: str = Form("")):
+    file_bytes = await file.read()  # 只讀一次
+    async def event_stream():
+        try:
+            yield f"data: {{\"progress\": 10, \"stage\": \"檔案解析中...\"}}\n\n"
+            await asyncio.sleep(0.2)
+            text = extract_text_from_file(file_bytes, file.filename)
+            yield f"data: {{\"progress\": 30, \"stage\": \"產生查詢...\"}}\n\n"
+            await asyncio.sleep(0.2)
+            # 自動偵測語言並加上語言指示
+            def contains_chinese(s):
+                return any('\u4e00' <= c <= '\u9fff' for c in s)
+            if prompt:
+                if contains_chinese(prompt):
+                    lang_prefix = "請用繁體中文回答。"
+                else:
+                    lang_prefix = "Please answer in English."
+                combined = f"{lang_prefix}\n【分析需求】\n{prompt}\n\n【PDF內容】\n{text}"
+            else:
+                combined = text
+            state = {"messages": [HumanMessage(content=combined)]}
+            yield f"data: {{\"progress\": 50, \"stage\": \"進行網路搜尋...\"}}\n\n"
+            await asyncio.sleep(0.2)
+            result = graph.invoke(state)
+            yield f"data: {{\"progress\": 80, \"stage\": \"彙整分析...\"}}\n\n"
+            await asyncio.sleep(0.2)
+            messages = result.get("messages", [])
+            summary = messages[-1].content if messages else ""
+            sources = result.get("sources_gathered", [])
+            investment_score = min(100, max(0, 60 + len(sources) * 10))
+            result_dict = {
+                "progress": 100,
+                "stage": "完成",
+                "result": {
+                    "summary": summary,
+                    "investment_score": investment_score,
+                    "sources": [s["value"] for s in sources],
+                },
+            }
+            yield f"data: {json.dumps(result_dict, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

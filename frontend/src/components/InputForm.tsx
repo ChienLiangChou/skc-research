@@ -93,72 +93,36 @@ export const InputForm: React.FC<InputFormProps> = ({
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex flex-row gap-2">
-          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2  max-w-[100%] sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm">
+        <div className="flex flex-row gap-2 justify-center items-center w-full mt-2">
+          <div className="flex flex-col items-center bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm px-2 py-1 max-w-[100%] sm:max-w-[90%]">
+            <div className="flex flex-row items-center text-sm mb-1 justify-center w-full">
               <Brain className="h-4 w-4 mr-2" />
-              Effort
+              <span className="text-center w-full">Effort</span>
             </div>
             <Select value={effort} onValueChange={setEffort}>
-              <SelectTrigger className="w-[120px] bg-transparent border-none cursor-pointer">
+              <SelectTrigger className="w-[100px] bg-transparent border-none cursor-pointer mx-auto">
                 <SelectValue placeholder="Effort" />
               </SelectTrigger>
               <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer">
-                <SelectItem
-                  value="low"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  Low
-                </SelectItem>
-                <SelectItem
-                  value="medium"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  Medium
-                </SelectItem>
-                <SelectItem
-                  value="high"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  High
-                </SelectItem>
+                <SelectItem value="low" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer">Low</SelectItem>
+                <SelectItem value="medium" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer">Medium</SelectItem>
+                <SelectItem value="high" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer">High</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-row gap-2 bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm pl-2  max-w-[100%] sm:max-w-[90%]">
-            <div className="flex flex-row items-center text-sm ml-2">
+          <div className="flex flex-col items-center bg-neutral-700 border-neutral-600 text-neutral-300 focus:ring-neutral-500 rounded-xl rounded-t-sm px-2 py-1 max-w-[100%] sm:max-w-[90%]">
+            <div className="flex flex-row items-center text-sm mb-1 justify-center w-full">
               <Cpu className="h-4 w-4 mr-2" />
-              Model
+              <span className="text-center w-full">Model</span>
             </div>
             <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="w-[150px] bg-transparent border-none cursor-pointer">
+              <SelectTrigger className="w-[130px] bg-transparent border-none cursor-pointer mx-auto">
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent className="bg-neutral-700 border-neutral-600 text-neutral-300 cursor-pointer">
-                <SelectItem
-                  value="gemini-2.0-flash"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Zap className="h-4 w-4 mr-2 text-yellow-400" /> 2.0 Flash
-                  </div>
-                </SelectItem>
-                <SelectItem
-                  value="gemini-2.5-flash-preview-04-17"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Zap className="h-4 w-4 mr-2 text-orange-400" /> 2.5 Flash
-                  </div>
-                </SelectItem>
-                <SelectItem
-                  value="gemini-2.5-pro-preview-05-06"
-                  className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Cpu className="h-4 w-4 mr-2 text-purple-400" /> 2.5 Pro
-                  </div>
-                </SelectItem>
+                <SelectItem value="gemini-2.0-flash" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"><div className="flex items-center"><Zap className="h-4 w-4 mr-2 text-yellow-400" /> 2.0 Flash</div></SelectItem>
+                <SelectItem value="gemini-2.5-flash-preview-04-17" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"><div className="flex items-center"><Zap className="h-4 w-4 mr-2 text-orange-400" /> 2.5 Flash</div></SelectItem>
+                <SelectItem value="gemini-2.5-pro-preview-05-06" className="hover:bg-neutral-600 focus:bg-neutral-600 cursor-pointer"><div className="flex items-center"><Cpu className="h-4 w-4 mr-2 text-purple-400" /> 2.5 Pro</div></SelectItem>
               </SelectContent>
             </Select>
           </div>

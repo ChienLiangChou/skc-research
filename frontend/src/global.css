@@ -185,3 +185,10 @@
 
 /* Ensure your body or html has a dark background if not already set, e.g.: */
 /* body { background-color: #0c0c0d; } */ /* This is similar to neutral-950 */
+
+body, html, #root {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}

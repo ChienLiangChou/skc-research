@@ -1,4 +1,5 @@
 import os
+import requests
 
 from agent.tools_and_schemas import SearchQueryList, Reflection
 from dotenv import load_dotenv
@@ -93,45 +94,30 @@ def continue_to_web_research(state: QueryGenerationState):
 
 
 def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
-    """LangGraph node that performs web research using the native Google Search API tool.
-
-    Executes a web search using the native Google Search API tool in combination with Gemini 2.0 Flash.
-
-    Args:
-        state: Current graph state containing the search query and research loop count
-        config: Configuration for the runnable, including search API settings
-
-    Returns:
-        Dictionary with state update, including sources_gathered, research_loop_count, and web_research_results
-    """
-    # Configure
+    """LangGraph node that performs web research using Tavily Search API."""
     configurable = Configuration.from_runnable_config(config)
-    formatted_prompt = web_searcher_instructions.format(
-        current_date=get_current_date(),
-        research_topic=state["search_query"],
+    tavily_api_key = configurable.tavily_api_key or os.getenv("TAVILY_API_KEY")
+    if not tavily_api_key:
+        raise ValueError("TAVILY_API_KEY is not set")
+    query = state["search_query"]
+    # Tavily API: https://docs.tavily.com/reference/search
+    resp = requests.post(
+        "https://api.tavily.com/search",
+        headers={"Authorization": f"Bearer {tavily_api_key}"},
+        json={"query": query, "search_depth": "advanced", "include_answer": True, "include_raw_content": False},
+        timeout=30,
     )
-
-    # Uses the google genai client as the langchain client doesn't return grounding metadata
-    response = genai_client.models.generate_content(
-        model=configurable.query_generator_model,
-        contents=formatted_prompt,
-        config={
-            "tools": [{"google_search": {}}],
-            "temperature": 0,
-        },
-    )
-    # resolve the urls to short urls for saving tokens and time
-    resolved_urls = resolve_urls(
-        response.candidates[0].grounding_metadata.grounding_chunks, state["id"]
-    )
-    # Gets the citations and adds them to the generated text
-    citations = get_citations(response, resolved_urls)
-    modified_text = insert_citation_markers(response.text, citations)
-    sources_gathered = [item for citation in citations for item in citation["segments"]]
-
+    if resp.status_code != 200:
+        raise RuntimeError(f"Tavily search failed: {resp.text}")
+    data = resp.json()
+    answer = data.get("answer", "")
+    sources = [s.get("url") for s in data.get("sources", []) if s.get("url")]
+    # 產生 citation 格式
+    modified_text = answer
+    sources_gathered = [{"label": f"source{i+1}", "short_url": url, "value": url} for i, url in enumerate(sources)]
     return {
         "sources_gathered": sources_gathered,
-        "search_query": [state["search_query"]],
+        "search_query": [query],
         "web_research_result": [modified_text],
     }
 

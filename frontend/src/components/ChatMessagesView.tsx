@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Copy, CopyCheck } from "lucide-react";
 import { InputForm } from "@/components/InputForm";
 import { Button } from "@/components/ui/button";
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,9 @@ import {
   ActivityTimeline,
   ProcessedEvent,
 } from "@/components/ActivityTimeline"; // Assuming ActivityTimeline is in the same dir or adjust path
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import AnalysisCard from "@/components/AnalysisCard";
 
 // Markdown component props type from former ReportView
 type MdComponentProps = {
@@ -242,6 +245,7 @@ export function ChatMessagesView({
   historicalActivities,
 }: ChatMessagesViewProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const pdfRef = useRef<HTMLDivElement | null>(null);
 
   const handleCopy = async (text: string, messageId: string) => {
     try {
@@ -252,31 +256,51 @@ export function ChatMessagesView({
       console.error("Failed to copy text: ", err);
     }
   };
+
+  const handleDownloadPDF = async () => {
+    if (!pdfRef.current) return;
+    const element = pdfRef.current;
+    const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "p", unit: "px", format: "a4" });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
+    const imgWidth = canvas.width * ratio;
+    const imgHeight = canvas.height * ratio;
+    pdf.addImage(imgData, "PNG", (pageWidth - imgWidth) / 2, 20, imgWidth, imgHeight, undefined, 'FAST');
+    pdf.save("analysis.pdf");
+  };
+
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 overflow-y-auto" ref={scrollAreaRef}>
-        <div className="p-4 md:p-6 space-y-2 max-w-4xl mx-auto pt-16">
+        <div className="p-4 md:p-6 space-y-2 w-full pt-16 flex flex-col items-center">
           {messages.map((message, index) => {
+            // 只針對 AI 分析結果渲染 AnalysisCard
+            if (message.type === "ai") {
+              return (
+                <AnalysisCard key={message.id || `ai-${index}`} content={typeof message.content === 'string' ? message.content : JSON.stringify(message.content)} />
+              );
+            }
+            // 其他訊息維持原本結構
             const isLast = index === messages.length - 1;
             return (
-              <div key={message.id || `msg-${index}`} className="space-y-3">
+              <div key={message.id || `msg-${index}`} className="space-y-3 w-full flex flex-col items-center">
                 <div
                   className={`flex items-start gap-3 ${
                     message.type === "human" ? "justify-end" : ""
-                  }`}
+                  } w-full`}
                 >
                   {message.type === "human" ? (
-                    <HumanMessageBubble
-                      message={message}
-                      mdComponents={mdComponents}
-                    />
+                    <HumanMessageBubble message={message} mdComponents={mdComponents} />
                   ) : (
                     <AiMessageBubble
                       message={message}
-                      historicalActivity={historicalActivities[message.id!]}
-                      liveActivity={liveActivityEvents} // Pass global live events
+                      historicalActivity={historicalActivities[message.id || ""]}
+                      liveActivity={liveActivityEvents}
                       isLastMessage={isLast}
-                      isOverallLoading={isLoading} // Pass global loading state
+                      isOverallLoading={isLoading}
                       mdComponents={mdComponents}
                       handleCopy={handleCopy}
                       copiedMessageId={copiedMessageId}
@@ -286,29 +310,6 @@ export function ChatMessagesView({
               </div>
             );
           })}
-          {isLoading &&
-            (messages.length === 0 ||
-              messages[messages.length - 1].type === "human") && (
-              <div className="flex items-start gap-3 mt-3">
-                {" "}
-                {/* AI message row structure */}
-                <div className="relative group max-w-[85%] md:max-w-[80%] rounded-xl p-3 shadow-sm break-words bg-neutral-800 text-neutral-100 rounded-bl-none w-full min-h-[56px]">
-                  {liveActivityEvents.length > 0 ? (
-                    <div className="text-xs">
-                      <ActivityTimeline
-                        processedEvents={liveActivityEvents}
-                        isLoading={true}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-start h-full">
-                      <Loader2 className="h-5 w-5 animate-spin text-neutral-400 mr-2" />
-                      <span>Processing...</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
         </div>
       </ScrollArea>
       <InputForm

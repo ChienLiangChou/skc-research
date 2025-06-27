@@ -39,6 +39,19 @@ class Configuration(BaseModel):
         metadata={"description": "The maximum number of research loops to perform."},
     )
 
+    gemini_api_key: str = Field(
+        default_factory=lambda: os.environ.get("GEMINI_API_KEY", ""),
+        metadata={"description": "API key for Gemini Deep Research."},
+    )
+    langsmith_api_key: str = Field(
+        default_factory=lambda: os.environ.get("LANGSMITH_API_KEY", ""),
+        metadata={"description": "API key for LangSmith (LangGraph)."},
+    )
+    tavily_api_key: str = Field(
+        default_factory=lambda: os.environ.get("TAVILY_API_KEY", ""),
+        metadata={"description": "API key for Tavily Search."},
+    )
+
     @classmethod
     def from_runnable_config(
         cls, config: Optional[RunnableConfig] = None

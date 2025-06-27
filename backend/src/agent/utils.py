@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 from langchain_core.messages import AnyMessage, AIMessage, HumanMessage
+import io
 
 
 def get_research_topic(messages: List[AnyMessage]) -> str:
@@ -164,3 +165,23 @@ def get_citations(response, resolved_urls_map):
                     pass
         citations.append(citation)
     return citations
+
+
+def extract_text_from_file(file_bytes: bytes, filename: str) -> str:
+    """
+    Extract text from PDF, DOCX, or TXT file bytes.
+    """
+    import os
+    ext = os.path.splitext(filename)[1].lower()
+    if ext == ".pdf":
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            return "\n".join(page.extract_text() or "" for page in pdf.pages)
+    elif ext == ".docx":
+        from docx import Document
+        doc = Document(io.BytesIO(file_bytes))
+        return "\n".join([p.text for p in doc.paragraphs])
+    elif ext == ".txt":
+        return file_bytes.decode("utf-8", errors="ignore")
+    else:
+        raise ValueError(f"Unsupported file type: {ext}")
