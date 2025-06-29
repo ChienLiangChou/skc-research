@@ -12,8 +12,6 @@ import {
   ActivityTimeline,
   ProcessedEvent,
 } from "@/components/ActivityTimeline"; // Assuming ActivityTimeline is in the same dir or adjust path
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import AnalysisCard from "@/components/AnalysisCard";
 
 // Markdown component props type from former ReportView
@@ -245,7 +243,6 @@ export function ChatMessagesView({
   historicalActivities,
 }: ChatMessagesViewProps) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const pdfRef = useRef<HTMLDivElement | null>(null);
 
   const handleCopy = async (text: string, messageId: string) => {
     try {
