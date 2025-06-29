@@ -1,7 +1,7 @@
 import type React from "react";
 import type { Message } from "@langchain/langgraph-sdk";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Copy, CopyCheck } from "lucide-react";
+import { Copy, CopyCheck } from "lucide-react";
 import { InputForm } from "@/components/InputForm";
 import { Button } from "@/components/ui/button";
 import { useState, ReactNode, useRef } from "react";
@@ -255,21 +255,6 @@ export function ChatMessagesView({
     } catch (err) {
       console.error("Failed to copy text: ", err);
     }
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!pdfRef.current) return;
-    const element = pdfRef.current;
-    const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({ orientation: "p", unit: "px", format: "a4" });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-    const imgWidth = canvas.width * ratio;
-    const imgHeight = canvas.height * ratio;
-    pdf.addImage(imgData, "PNG", (pageWidth - imgWidth) / 2, 20, imgWidth, imgHeight, undefined, 'FAST');
-    pdf.save("analysis.pdf");
   };
 
   return (
