@@ -78,7 +78,7 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
                 combined = f"{lang_prefix}\n【分析需求】\n{prompt}\n\n【PDF內容】\n{text}"
             else:
                 combined = text
-            state = {"messages": [HumanMessage(content=combined)]}
+            state = {"messages": [HumanMessage(content=text)]}
             yield f"data: {{\"progress\": 50, \"stage\": \"進行網路搜尋...\"}}\n\n"
             await asyncio.sleep(0.2)
             result = graph.invoke(state)
@@ -101,3 +101,7 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
         except Exception as e:
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

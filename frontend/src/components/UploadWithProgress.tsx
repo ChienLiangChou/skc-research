@@ -77,7 +77,7 @@ export default function UploadWithProgress() {
         }
       }
     };
-    xhr.onerror = () => {
+    xhr.onerror = (error) => {
       setUploading(false);
       setError("網路錯誤，請確認後端已啟動於 2024 port 並重試");
     };
