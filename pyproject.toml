@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "gemini-fullstack-langgraph-quickstart"
+version = "0.1.0"
+description = "Fullstack app with FastAPI backend and React frontend"
+authors = ["Your Name <your@email.com>"]
+readme = "README.md"
+packages = [
+    { include = "agent", from = "backend/src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.110.0"
+uvicorn = "^0.29.0"
+pydantic = "^2.0"
+# 你有用到的其他依賴請補上
+# 例如：
+# langchain = "*"
+# openai = "*"
+# google-search-results = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
