@@ -100,7 +100,21 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
             yield f"data: {json.dumps(result_dict, ensure_ascii=False)}\n\n"
         except Exception as e:
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+    response = StreamingResponse(event_stream(), media_type="text/event-stream")
+    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
+from fastapi import Response
+
+@app.options("/upload-and-analyze/progress")
+async def options_upload_and_analyze_progress():
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 @app.get("/health")
 def health():
