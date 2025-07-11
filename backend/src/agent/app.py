@@ -3,8 +3,8 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import pathlib
-from agent.utils import extract_text_from_file
-from agent.graph import graph
+from .utils import extract_text_from_file
+from .graph import graph
 from langchain_core.messages import HumanMessage
 import asyncio
 import json
