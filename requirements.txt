@@ -2,3 +2,4 @@
 langchain-core
 starlette 
 python-dotenv 
+# vercel redeploy trigger 
