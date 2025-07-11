@@ -3,3 +3,4 @@ uvicorn
 python-multipart
 langchain-core
 starlette 
+python-dotenv 
