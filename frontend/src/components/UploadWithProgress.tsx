@@ -46,12 +46,13 @@ export default function UploadWithProgress() {
     setProgress(0);
     setStage("");
     setError("");
-    setResult(null);
+    setResult(null); 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("prompt", prompt);
+    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:2024";
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://localhost:2024/upload-and-analyze/progress");
+    xhr.open("POST", `${API_BASE_URL}/upload-and-analyze/progress`);
     xhr.setRequestHeader("Accept", "text/event-stream");
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 3 || xhr.readyState === 4) {
