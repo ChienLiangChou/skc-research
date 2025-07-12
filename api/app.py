@@ -14,7 +14,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"],
+    allow_origins=["https://skc-research-35nnjw7i1-skc-realty-teams-projects.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,6 +58,7 @@ app.mount(
 )
 
 @app.post("/upload-and-analyze/progress")
+@app.post("/upload-and-analyze/progress/")
 async def upload_and_analyze_progress(request: Request, file: UploadFile = File(...), prompt: str = Form("")):
     file_bytes = await file.read()  # 只讀一次
     async def event_stream():
@@ -101,16 +102,17 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
         except Exception as e:
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
     response = StreamingResponse(event_stream(), media_type="text/event-stream")
-    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
+    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw7i1-skc-realty-teams-projects.vercel.app"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
 from fastapi import Response
 
 @app.options("/upload-and-analyze/progress")
+@app.options("/upload-and-analyze/progress/")
 async def options_upload_and_analyze_progress():
     response = Response()
-    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
+    response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw7i1-skc-realty-teams-projects.vercel.app"
     response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
