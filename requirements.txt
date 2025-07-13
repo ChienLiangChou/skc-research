@@ -2,4 +2,4 @@
 langchain-core
 starlette 
 python-dotenv 
-# vercel redeploy trigger 
+# vercel redeploy trigger uvicorn[standard]
