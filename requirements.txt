@@ -1,5 +1,0 @@
-# 以下內容來自 backend/requirements.txt
-langchain-core
-starlette 
-python-dotenv 
-# vercel redeploy trigger uvicorn[standard]
