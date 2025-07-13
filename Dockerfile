@@ -17,4 +17,4 @@ RUN poetry config virtualenvs.create false \
 COPY backend/ ./
 
 # 啟動指令
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "10000"]
+CMD ["uvicorn", "src.agent.app:app", "--host", "0.0.0.0", "--port", "10000"]
