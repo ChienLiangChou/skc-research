@@ -51,6 +51,7 @@ export default function UploadWithProgress() {
     formData.append("file", file);
     formData.append("prompt", prompt);
     const API_BASE_URL = import.meta.env.VITE_API_URL;
+    console.log("VITE_API_URL:", API_BASE_URL);
     if (!API_BASE_URL) {
       setError("VITE_API_URL 未設定，請聯絡管理員。");
       setUploading(false);

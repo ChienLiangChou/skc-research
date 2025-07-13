@@ -18,6 +18,7 @@ export default function App() {
   const hasFinalizeEventOccurredRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const API_BASE_URL = import.meta.env.VITE_API_URL;
+  console.log("VITE_API_URL (App):", API_BASE_URL);
   const thread = useStream<{
     messages: Message[];
     initial_search_query_count: number;
