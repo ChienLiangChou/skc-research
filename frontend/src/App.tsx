@@ -17,7 +17,7 @@ export default function App() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const hasFinalizeEventOccurredRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:2024" : "http://localhost:8123");
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const thread = useStream<{
     messages: Message[];
     initial_search_query_count: number;

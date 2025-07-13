@@ -50,7 +50,12 @@ export default function UploadWithProgress() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("prompt", prompt);
-    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:2024";
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
+    if (!API_BASE_URL) {
+      setError("VITE_API_URL 未設定，請聯絡管理員。");
+      setUploading(false);
+      return;
+    }
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE_URL}/upload-and-analyze/progress`);
     xhr.setRequestHeader("Accept", "text/event-stream");
