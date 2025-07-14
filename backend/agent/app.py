@@ -8,6 +8,7 @@ from .graph import graph
 from langchain_core.messages import HumanMessage
 import asyncio
 import json
+import logging
 
 # Define the FastAPI app
 app = FastAPI()
@@ -19,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logging.basicConfig(level=logging.INFO)
 
 def create_frontend_router(build_dir="../frontend/dist"):
     """Creates a router to serve the React frontend.
@@ -61,16 +64,16 @@ app.mount(
 async def upload_and_analyze_progress(request: Request, file: UploadFile = File(...), prompt: str = Form("")):
     file_bytes = await file.read()  # 只讀一次
     async def event_stream():
-        print("[LOG] event_stream started")
+        logging.info("[LOG] event_stream started")
         try:
-            print("[LOG] before yield: 檔案解析中...")
+            logging.info("[LOG] before yield: 檔案解析中...")
             yield f"data: {{\"progress\": 10, \"stage\": \"檔案解析中...\"}}\n\n"
-            print("[LOG] after yield: 檔案解析中...")
+            logging.info("[LOG] after yield: 檔案解析中...")
             await asyncio.sleep(0.2)
             text = extract_text_from_file(file_bytes, file.filename)
-            print("[LOG] before yield: 產生查詢...")
+            logging.info("[LOG] before yield: 產生查詢...")
             yield f"data: {{\"progress\": 30, \"stage\": \"產生查詢...\"}}\n\n"
-            print("[LOG] after yield: 產生查詢...")
+            logging.info("[LOG] after yield: 產生查詢...")
             await asyncio.sleep(0.2)
             # 自動偵測語言並加上語言指示
             def contains_chinese(s):
@@ -84,15 +87,15 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
             else:
                 combined = text
             state = {"messages": [HumanMessage(content=text)], "uploaded_file_content": text}
-            print(f"[LOG] upload_and_analyze_progress state: {state}")
-            print("[LOG] before yield: 進行網路搜尋...")
+            logging.info(f"[LOG] upload_and_analyze_progress state: {state}")
+            logging.info("[LOG] before yield: 進行網路搜尋...")
             yield f"data: {{\"progress\": 50, \"stage\": \"進行網路搜尋...\"}}\n\n"
-            print("[LOG] after yield: 進行網路搜尋...")
+            logging.info("[LOG] after yield: 進行網路搜尋...")
             await asyncio.sleep(0.2)
             result = graph.invoke(state)
-            print("[LOG] before yield: 彙整分析...")
+            logging.info("[LOG] before yield: 彙整分析...")
             yield f"data: {{\"progress\": 80, \"stage\": \"彙整分析...\"}}\n\n"
-            print("[LOG] after yield: 彙整分析...")
+            logging.info("[LOG] after yield: 彙整分析...")
             await asyncio.sleep(0.2)
             messages = result.get("messages", [])
             summary = messages[-1].content if messages else ""
@@ -109,13 +112,13 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
                     "file_analysis": file_analysis,
                 },
             }
-            print("[LOG] before yield: 完成")
+            logging.info("[LOG] before yield: 完成")
             yield f"data: {json.dumps(result_dict, ensure_ascii=False)}\n\n"
-            print("[LOG] after yield: 完成")
+            logging.info("[LOG] after yield: 完成")
         except Exception as e:
             import traceback
-            print(f"[LOG] SSE error: {str(e)}")
-            print(traceback.format_exc())
+            logging.error(f"[LOG] SSE error: {str(e)}")
+            logging.error(traceback.format_exc())
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
     response = StreamingResponse(event_stream(), media_type="text/event-stream")
     response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
