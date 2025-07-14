@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 origins = [
-    "https://skc-research-35nnjw7i1l-skc-realty-teams-projects.vercel.app",  # Vercel 前端網址
+    "https://skc-research-ear9.vercel.app",  # 新的 Vercel 前端網址
     "http://localhost:3000"  # 本地測試用
 ]
 
