@@ -23,6 +23,7 @@ from agent.prompts import (
     web_searcher_instructions,
     reflection_instructions,
     answer_instructions,
+    file_analysis_instructions,
 )
 from langchain_google_genai import ChatGoogleGenerativeAI
 from agent.utils import (
@@ -72,11 +73,14 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
 
     # Format the prompt
     current_date = get_current_date()
+    file_analysis = state.get("file_analysis_result", "")
     formatted_prompt = query_writer_instructions.format(
         current_date=current_date,
         research_topic=get_research_topic(state["messages"]),
         number_queries=state["initial_search_query_count"],
     )
+    if file_analysis:
+        formatted_prompt += f"\n\n【檔案分析重點】\n{file_analysis}"
     # Generate the search queries
     result = structured_llm.invoke(formatted_prompt)
     return {"search_query": result.query}
@@ -221,10 +225,14 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
 
     # Format the prompt
     current_date = get_current_date()
+    file_analysis = state.get("file_analysis_result", "")
+    web_summaries = "\n---\n\n".join(state["web_research_result"])
+    print(f"[LOG] Final summary input file_analysis_result: {file_analysis}")
+    print(f"[LOG] Final summary input web_summaries: {web_summaries}")
     formatted_prompt = answer_instructions.format(
         current_date=current_date,
         research_topic=get_research_topic(state["messages"]),
-        summaries="\n---\n\n".join(state["web_research_result"]),
+        summaries=(f"【檔案分析】\n{file_analysis}\n\n【網路搜尋】\n{web_summaries}" if file_analysis else web_summaries),
     )
 
     # init Reasoning Model, default to Gemini 2.5 Flash
@@ -235,6 +243,7 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
         api_key=os.getenv("GEMINI_API_KEY"),
     )
     result = llm.invoke(formatted_prompt)
+    print(f"[LOG] Final summary output: {result.content}")
 
     # Replace the short urls with the original urls and add all used urls to the sources_gathered
     unique_sources = []
@@ -251,6 +260,27 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
     }
 
 
+def analyze_file_content(state: OverallState, config: RunnableConfig) -> OverallState:
+    """Node: 讀取 uploaded_file_content，呼叫 Gemini 進行語意分析，結果存入 file_analysis_result。"""
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from agent.prompts import file_analysis_instructions
+    text = state.get("uploaded_file_content", "")
+    if not text:
+        print("[LOG] 未提供檔案內容。")
+        return {"file_analysis_result": "未提供檔案內容。"}
+    configurable = Configuration.from_runnable_config(config)
+    llm = ChatGoogleGenerativeAI(
+        model=configurable.query_generator_model,
+        temperature=0.7,
+        max_retries=2,
+        api_key=os.getenv("GEMINI_API_KEY"),
+    )
+    prompt = file_analysis_instructions.format(file_content=text)
+    result = llm.invoke(prompt)
+    print(f"[LOG] Gemini file analysis result: {result.content}")
+    return {"file_analysis_result": result.content}
+
+
 # Create our Agent Graph
 builder = StateGraph(OverallState, config_schema=Configuration)
 
@@ -259,10 +289,12 @@ builder.add_node("generate_query", generate_query)
 builder.add_node("web_research", web_research)
 builder.add_node("reflection", reflection)
 builder.add_node("finalize_answer", finalize_answer)
+builder.add_node("analyze_file_content", analyze_file_content)
 
 # Set the entrypoint as `generate_query`
 # This means that this node is the first one called
-builder.add_edge(START, "generate_query")
+builder.add_edge(START, "analyze_file_content")
+builder.add_edge("analyze_file_content", "generate_query")
 # Add conditional edge to continue with search queries in a parallel branch
 builder.add_conditional_edges(
     "generate_query", continue_to_web_research, ["web_research"]
