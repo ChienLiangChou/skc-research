@@ -83,7 +83,7 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
         formatted_prompt += f"\n\n【檔案分析重點】\n{file_analysis}"
     # Generate the search queries
     result = structured_llm.invoke(formatted_prompt)
-    return {"search_query": result.query}
+    return {"search_query": result.query, **state}
 
 
 def continue_to_web_research(state: QueryGenerationState):
@@ -123,6 +123,7 @@ def web_research(state: WebSearchState, config: RunnableConfig) -> OverallState:
         "sources_gathered": sources_gathered,
         "search_query": [query],
         "web_research_result": [modified_text],
+        **state,
     }
 
 
@@ -167,6 +168,7 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
         "follow_up_queries": result.follow_up_queries,
         "research_loop_count": state["research_loop_count"],
         "number_of_ran_queries": len(state["search_query"]),
+        **state,
     }
 
 
@@ -257,6 +259,7 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
     return {
         "messages": [AIMessage(content=result.content)],
         "sources_gathered": unique_sources,
+        **state,
     }
 
 
@@ -270,7 +273,7 @@ def analyze_file_content(state: OverallState, config: RunnableConfig) -> Overall
     print(f"[LOG] GEMINI_API_KEY: {os.getenv('GEMINI_API_KEY')[:8]}... (length: {len(os.getenv('GEMINI_API_KEY') or '')})")
     if not text:
         print("[LOG] 未提供檔案內容。")
-        return {"file_analysis_result": "未提供檔案內容。"}
+        return {"file_analysis_result": "未提供檔案內容。", **state}
     configurable = Configuration.from_runnable_config(config)
     llm = ChatGoogleGenerativeAI(
         model=configurable.query_generator_model,
@@ -281,7 +284,7 @@ def analyze_file_content(state: OverallState, config: RunnableConfig) -> Overall
     prompt = file_analysis_instructions.format(file_content=text)
     result = llm.invoke(prompt)
     print(f"[LOG] Gemini file analysis result: {result.content}")
-    return {"file_analysis_result": result.content}
+    return {"file_analysis_result": result.content, **state}
 
 
 # Create our Agent Graph
