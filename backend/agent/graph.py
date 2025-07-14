@@ -262,9 +262,12 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
 
 def analyze_file_content(state: OverallState, config: RunnableConfig) -> OverallState:
     """Node: 讀取 uploaded_file_content，呼叫 Gemini 進行語意分析，結果存入 file_analysis_result。"""
+    import os
     from langchain_google_genai import ChatGoogleGenerativeAI
     from agent.prompts import file_analysis_instructions
     text = state.get("uploaded_file_content", "")
+    print(f"[LOG] uploaded_file_content: {text[:200]}")
+    print(f"[LOG] GEMINI_API_KEY: {os.getenv('GEMINI_API_KEY')[:8]}... (length: {len(os.getenv('GEMINI_API_KEY') or '')})")
     if not text:
         print("[LOG] 未提供檔案內容。")
         return {"file_analysis_result": "未提供檔案內容。"}
