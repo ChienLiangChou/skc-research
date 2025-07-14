@@ -78,7 +78,8 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
                 combined = f"{lang_prefix}\n【分析需求】\n{prompt}\n\n【PDF內容】\n{text}"
             else:
                 combined = text
-            state = {"messages": [HumanMessage(content=text)]}
+            state = {"messages": [HumanMessage(content=text)], "uploaded_file_content": text}
+            print(f"[LOG] upload_and_analyze_progress state: {state}")
             yield f"data: {{\"progress\": 50, \"stage\": \"進行網路搜尋...\"}}\n\n"
             await asyncio.sleep(0.2)
             result = graph.invoke(state)
@@ -88,6 +89,7 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
             summary = messages[-1].content if messages else ""
             sources = result.get("sources_gathered", [])
             investment_score = min(100, max(0, 60 + len(sources) * 10))
+            file_analysis = result.get("file_analysis_result", "")
             result_dict = {
                 "progress": 100,
                 "stage": "完成",
@@ -95,10 +97,14 @@ async def upload_and_analyze_progress(request: Request, file: UploadFile = File(
                     "summary": summary,
                     "investment_score": investment_score,
                     "sources": [s["value"] for s in sources],
+                    "file_analysis": file_analysis,
                 },
             }
             yield f"data: {json.dumps(result_dict, ensure_ascii=False)}\n\n"
         except Exception as e:
+            import traceback
+            print(f"[LOG] SSE error: {str(e)}")
+            print(traceback.format_exc())
             yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
     response = StreamingResponse(event_stream(), media_type="text/event-stream")
     response.headers["Access-Control-Allow-Origin"] = "https://skc-research-35nnjw71-skc-realty-teams-projects.vercel.app"
