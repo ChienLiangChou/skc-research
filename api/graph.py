@@ -32,6 +32,12 @@ from agent.utils import (
     resolve_urls,
 )
 
+class GeminiDefaultSamplingChat(ChatGoogleGenerativeAI):
+    """Omit the sampling default injected by older LangChain versions."""
+
+    temperature: float | None = None
+
+
 load_dotenv()
 
 if os.getenv("GEMINI_API_KEY") is None:
@@ -62,9 +68,8 @@ def generate_query(state: OverallState, config: RunnableConfig) -> QueryGenerati
         state["initial_search_query_count"] = configurable.number_of_initial_queries
 
     # init Gemini 2.0 Flash
-    llm = ChatGoogleGenerativeAI(
+    llm = GeminiDefaultSamplingChat(
         model=configurable.query_generator_model,
-        temperature=1.0,
         max_retries=2,
         api_key=os.getenv("GEMINI_API_KEY"),
     )
@@ -149,9 +154,8 @@ def reflection(state: OverallState, config: RunnableConfig) -> ReflectionState:
         summaries="\n\n---\n\n".join(state["web_research_result"]),
     )
     # init Reasoning Model
-    llm = ChatGoogleGenerativeAI(
+    llm = GeminiDefaultSamplingChat(
         model=reasoning_model,
-        temperature=1.0,
         max_retries=2,
         api_key=os.getenv("GEMINI_API_KEY"),
     )
@@ -228,9 +232,8 @@ def finalize_answer(state: OverallState, config: RunnableConfig):
     )
 
     # init Reasoning Model, default to Gemini 2.5 Flash
-    llm = ChatGoogleGenerativeAI(
+    llm = GeminiDefaultSamplingChat(
         model=reasoning_model,
-        temperature=0,
         max_retries=2,
         api_key=os.getenv("GEMINI_API_KEY"),
     )
